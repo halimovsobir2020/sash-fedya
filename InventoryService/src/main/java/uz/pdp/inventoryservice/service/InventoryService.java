@@ -22,4 +22,9 @@ public class InventoryService {
         List<ProductOutcome> list = orderItems.stream().map(item -> new ProductOutcome(item.getProductId(), item.getQuantity(), LocalDateTime.now(), orderId)).toList();
         productOutcomeRepository.saveAll(list);
     }
+
+    @Transactional
+    public void rollback(Long orderId) {
+        productOutcomeRepository.deleteAllByOrderId(orderId);
+    }
 }

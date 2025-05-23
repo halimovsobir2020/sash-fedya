@@ -24,6 +24,14 @@ public class InventoryController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/rollback/{orderId}")
+    public ResponseEntity<?> rollback(@PathVariable("orderId") Long orderId) {
+        inventoryService.rollback(orderId);
+        return ResponseEntity.ok().build();
+    }
+
+
+
 
 
 }

@@ -19,4 +19,8 @@ public class PaymentService {
         payment.setOrderId(paymentCreateDTO.getOrderId());
         return paymentRepository.save(payment);
     }
+
+    public void rollbackPayment(Long orderId) {
+        paymentRepository.deleteByOrderId(orderId);
+    }
 }

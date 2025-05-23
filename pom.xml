@@ -29,6 +29,7 @@
     </scm>
 
     <modules>
+        <module>Clients</module>
         <module>EurekaService</module>
         <module>OrderService</module>
         <module>PaymentService</module>
@@ -79,6 +80,7 @@
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+
 
     </dependencies>
 

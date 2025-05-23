@@ -11,7 +11,10 @@ import java.util.List;
 @FeignClient("PRODUCTSERVICE")
 public interface ProductClient {
 
-    @PostMapping("/leftover/update")
-    ResponseEntity<?> updateProductLeftOver(@RequestBody List<OrderItemDTO> orderItems);
+    @PostMapping("/api/v1/product/leftover/update")
+    ResponseEntity<List<OrderItemDTO>> updateProductLeftOver(@RequestBody List<OrderItemDTO> orderItems);
+
+    @PostMapping("/api/v1/product/rollback")
+    ResponseEntity<?> rollback(@RequestBody List<OrderItemDTO> orderItemDTOS);
 
 }

@@ -65,17 +65,13 @@ public class ProductService {
     }
 
     @Transactional
-    public List<ProductInfoDTO> updateLeftOver(List<OrderItemDTO> orderItems) throws Exception {
-        List<Product> products = new ArrayList<>();
+    public List<OrderItemDTO> updateLeftOver(List<OrderItemDTO> orderItems) throws Exception {
         for (OrderItemDTO orderItem : orderItems) {
             Product product = changeLeftOverOfProduct(orderItem);
-            products.add(product);
+            orderItem.setPrice(product.getPrice());
+            orderItem.setProductName(product.getName());
         }
-        return products.stream().map(item->new ProductInfoDTO(
-                item.getId(),
-                item.getName(),
-                item.getPrice()
-        )).toList();
+        return orderItems;
     }
 
     private Product changeLeftOverOfProduct(OrderItemDTO orderItem) throws Exception {

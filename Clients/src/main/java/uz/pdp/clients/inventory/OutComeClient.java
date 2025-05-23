@@ -12,6 +12,9 @@ import java.util.List;
 @FeignClient("INVENTORYSERVICE")
 public interface OutComeClient {
 
-    @PostMapping("/outcome/{orderId}")
+    @PostMapping("/api/v1/inventory/outcome/{orderId}")
     ResponseEntity<?> orderOutcome(@RequestBody List<OrderItemDTO> orderItems, @PathVariable("orderId") Long orderId);
+
+    @PostMapping("/api/v1/inventory/rollback/{orderId}")
+    ResponseEntity<?> rollback(@PathVariable("orderId") Long orderId);
 }

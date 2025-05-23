@@ -28,10 +28,10 @@ public class ProductController {
     }
 
     @PostMapping("/leftover/update")
-    public ResponseEntity<?> updateProductLeftOver(@RequestBody  List<OrderItemDTO> orderItems) {
+    public ResponseEntity<List<OrderItemDTO>> updateProductLeftOver(@RequestBody  List<OrderItemDTO> orderItems) {
         try {
-            List<ProductInfoDTO> productInfoDTOS = productService.updateLeftOver(orderItems);
-            return ResponseEntity.ok().body(productInfoDTOS);
+            List<OrderItemDTO> orderItemDTOS = productService.updateLeftOver(orderItems);
+            return ResponseEntity.ok().body(orderItemDTOS);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
