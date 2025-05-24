@@ -1,7 +1,5 @@
 package uz.pdp.inventoryservice.controller;
 
-import jakarta.persistence.criteria.Order;
-import org.springframework.http.HttpEntity;
 import uz.pdp.clients.dtos.OrderItemDTO;
 import uz.pdp.inventoryservice.service.InventoryService;
 import lombok.RequiredArgsConstructor;

@@ -3,7 +3,6 @@ package uz.pdp.inventoryservice.service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.pdp.clients.dtos.OrderItemDTO;
 import uz.pdp.inventoryservice.entity.ProductOutcome;
-import uz.pdp.inventoryservice.repo.ProductIncomeRepository;
 import uz.pdp.inventoryservice.repo.ProductOutcomeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -5,16 +5,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import uz.pdp.clients.dtos.OrderItemDTO;
+import uz.pdp.clients.dtos.OrderItemFull;
 
 import java.util.List;
 
-@FeignClient("PRODUCTSERVICE")
+@FeignClient(value = "PRODUCTSERVICE",path = "/api/v1/product")
 public interface ProductClient {
 
-    @PostMapping("/api/v1/product/leftover/update")
-    ResponseEntity<List<OrderItemDTO>> updateProductLeftOver(@RequestBody List<OrderItemDTO> orderItems);
+    @PostMapping("/leftover/update")
+    ResponseEntity<List<OrderItemFull>> updateProductLeftOver(@RequestBody List<OrderItemFull> orderItems);
 
-    @PostMapping("/api/v1/product/rollback")
+    @PostMapping("/rollback")
     ResponseEntity<?> rollback(@RequestBody List<OrderItemDTO> orderItemDTOS);
 
 }

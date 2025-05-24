@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import uz.pdp.clients.dtos.OrderItemDTO;
+import uz.pdp.clients.dtos.OrderItemFull;
 import uz.pdp.clients.dtos.PaymentCreateDTO;
 import uz.pdp.clients.inventory.OutComeClient;
 import uz.pdp.clients.payment.PaymentClient;
@@ -19,7 +19,7 @@ import uz.pdp.orderservice.repo.OrderRepository;
 
 import java.util.List;
 
-@ComponentScan(basePackages = {"uz.pdp.orderservice","uz.pdp.clients"})
+@ComponentScan(basePackages = {"uz.pdp.orderservice", "uz.pdp.clients"})
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -32,9 +32,9 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(OrderDTO orderDTO) {
-        List<OrderItemDTO> orderItemDTOS = checkProductAvailabilty(orderDTO);
+        List<OrderItemFull> orderItemFulls = checkProductAvailabilty(orderDTO);
         Order savedOrder = orderRepository.save(new Order());
-        List<OrderItem> orderItems = orderItemDTOS.stream().map(orderItem -> new OrderItem(
+        List<OrderItem> orderItems = orderItemFulls.stream().map(orderItem -> new OrderItem(
                 savedOrder,
                 orderItem.getProductId(),
                 orderItem.getQuantity(),
@@ -72,12 +72,17 @@ public class OrderService {
         return orderItems.stream().mapToInt(orderItem -> orderItem.getPrice() * orderItem.getQuantity()).sum();
     }
 
-    private List<OrderItemDTO> checkProductAvailabilty(OrderDTO orderDTO) {
-        ResponseEntity<List<OrderItemDTO>> responseLeftOver = productClient.updateProductLeftOver(orderDTO.getOrderItems());
+    private List<OrderItemFull> checkProductAvailabilty(OrderDTO orderDTO) {
+        List<OrderItemFull> orderItemFulls = orderDTO.getOrderItems().stream().map(orderItemDTO -> new OrderItemFull(
+                orderItemDTO.getProductId(),
+                orderItemDTO.getQuantity()
+        )).toList();
+        ResponseEntity<List<OrderItemFull>> responseLeftOver = productClient.updateProductLeftOver(orderItemFulls);
         if (!responseLeftOver.getStatusCode().is2xxSuccessful()) {
             throw new RuntimeException("not enough products");
         }
         return responseLeftOver.getBody();
     }
+
 }
 

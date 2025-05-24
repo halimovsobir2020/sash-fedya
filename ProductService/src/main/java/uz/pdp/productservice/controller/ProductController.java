@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.clients.dtos.OrderItemDTO;
-import uz.pdp.clients.dtos.ProductInfoDTO;
+import uz.pdp.clients.dtos.OrderItemFull;
 import uz.pdp.productservice.dto.ProductDTO;
 import uz.pdp.productservice.entity.Product;
 import uz.pdp.productservice.service.ProductService;
@@ -28,13 +28,9 @@ public class ProductController {
     }
 
     @PostMapping("/leftover/update")
-    public ResponseEntity<List<OrderItemDTO>> updateProductLeftOver(@RequestBody  List<OrderItemDTO> orderItems) {
-        try {
-            List<OrderItemDTO> orderItemDTOS = productService.updateLeftOver(orderItems);
-            return ResponseEntity.ok().body(orderItemDTOS);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<List<OrderItemFull>> updateProductLeftOver(@RequestBody List<OrderItemFull> orderItems) {
+        List<OrderItemFull> orderItemDTOS = productService.updateLeftOver(orderItems);
+        return ResponseEntity.ok().body(orderItemDTOS);
     }
 
     @PostMapping
