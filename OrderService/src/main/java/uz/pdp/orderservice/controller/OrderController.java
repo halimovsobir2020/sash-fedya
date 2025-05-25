@@ -1,8 +1,6 @@
 package uz.pdp.orderservice.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,9 +18,9 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public HttpEntity<Order> createOrder(@RequestBody OrderDTO orderDTO) {
-        Order order = orderService.createOrder(orderDTO);
-        return new ResponseEntity<>(order, HttpStatus.CREATED);
+    public ResponseEntity<Order> saveOrder(@RequestBody OrderDTO orderDTO){
+        Order order = orderService.saveOrder(orderDTO);
+        return ResponseEntity.ok(order);
     }
 
 }

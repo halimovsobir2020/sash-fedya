@@ -9,9 +9,13 @@ import uz.pdp.clients.dtos.OrderItemDTO;
 
 import java.util.List;
 
-@FeignClient("INVENTORYSERVICE")
-public interface OutComeClient {
+@FeignClient(value = "INVENTORYSERVICE", path = "/api/v1/inventory")
+public interface InventoryClient {
 
     @PostMapping("/outcome/{orderId}")
     ResponseEntity<?> orderOutcome(@RequestBody List<OrderItemDTO> orderItems, @PathVariable("orderId") Long orderId);
+
+    @PostMapping("/rollback/outcome/{orderId}")
+    ResponseEntity<?> rollbackOutcome(@PathVariable Long orderId);
+
 }

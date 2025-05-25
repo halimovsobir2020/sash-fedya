@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.clients.dtos.OrderItemDTO;
-import uz.pdp.clients.dtos.ProductInfoDTO;
+import uz.pdp.clients.dtos.OrderItemFull;
 import uz.pdp.productservice.dto.ProductDTO;
 import uz.pdp.productservice.entity.Product;
 import uz.pdp.productservice.service.ProductService;
@@ -21,20 +21,16 @@ public class ProductController {
         this.productService = service;
     }
 
-    @PostMapping("/rollback")
-    public ResponseEntity<?> rollback(@RequestBody List<OrderItemDTO> orderItemDTOS) {
-        productService.compensateAction(orderItemDTOS);
-        return new ResponseEntity<>(HttpStatus.OK);
+    @PostMapping("/leftover/update")
+    public ResponseEntity<List<OrderItemFull>> updateProductLeftover(@RequestBody List<OrderItemDTO> orderItemDTOS) {
+        List<OrderItemFull> orderItems = productService.updateProductLeftover(orderItemDTOS);
+        return ResponseEntity.ok(orderItems);
     }
 
-    @PostMapping("/leftover/update")
-    public ResponseEntity<?> updateProductLeftOver(@RequestBody  List<OrderItemDTO> orderItems) {
-        try {
-            List<ProductInfoDTO> productInfoDTOS = productService.updateLeftOver(orderItems);
-            return ResponseEntity.ok().body(productInfoDTOS);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @PostMapping("/leftover/rollback")
+    public ResponseEntity<?> rollbackProductLeftover(@RequestBody List<OrderItemDTO> orderItemDTOS) {
+        productService.rollbackProductLeftover(orderItemDTOS);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping

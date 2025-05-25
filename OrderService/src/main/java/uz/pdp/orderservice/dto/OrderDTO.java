@@ -12,7 +12,6 @@ import java.util.List;
 @NoArgsConstructor
 public class OrderDTO {
 
-    private List<OrderItemDTO> orderItems;
+    private List<OrderItemDTO> orderItemDTOS;
 
 }
-

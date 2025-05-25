@@ -1,13 +1,8 @@
 package uz.pdp.paymentservice.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import uz.pdp.clients.dtos.PaymentCreateDTO;
 import uz.pdp.paymentservice.entity.Payment;
 import uz.pdp.paymentservice.service.PaymentService;
@@ -20,9 +15,15 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping
-    public ResponseEntity<?> createPayment(@RequestBody PaymentCreateDTO paymentCreateDTO) {
-        Payment payment = paymentService.create(paymentCreateDTO);
-        return new ResponseEntity<>(payment, HttpStatus.CREATED);
+    public ResponseEntity<Payment> savePayment(@RequestBody PaymentCreateDTO paymentCreateDTO) {
+        Payment payment = paymentService.savePayment(paymentCreateDTO);
+        return ResponseEntity.ok(payment);
+    }
+
+    @DeleteMapping("{orderId}")
+    public ResponseEntity<?> rollbackPayment(@PathVariable Long orderId) {
+        paymentService.rollbackPayment(orderId);
+        return ResponseEntity.ok().build();
     }
 
 }

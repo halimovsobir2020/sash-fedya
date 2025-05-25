@@ -4,6 +4,6 @@ import lombok.Value;
 
 @Value
 public class PaymentCreateDTO {
-    Integer amount;
+    Integer totalPrice;
     Long orderId;
 }
