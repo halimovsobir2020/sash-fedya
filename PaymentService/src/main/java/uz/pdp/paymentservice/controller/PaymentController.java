@@ -3,6 +3,7 @@ package uz.pdp.paymentservice.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import uz.pdp.clients.dtos.OrderFullDTO;
 import uz.pdp.clients.dtos.PaymentCreateDTO;
 import uz.pdp.paymentservice.entity.Payment;
 import uz.pdp.paymentservice.service.PaymentService;
@@ -15,8 +16,8 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping
-    public ResponseEntity<Payment> savePayment(@RequestBody PaymentCreateDTO paymentCreateDTO) {
-        Payment payment = paymentService.savePayment(paymentCreateDTO);
+    public ResponseEntity<?> savePayment(@RequestBody OrderFullDTO orderFullDTO) {
+        Payment payment = paymentService.savePayment(orderFullDTO);
         return ResponseEntity.ok(payment);
     }
 

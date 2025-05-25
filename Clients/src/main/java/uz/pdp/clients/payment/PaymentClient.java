@@ -6,13 +6,14 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import uz.pdp.clients.dtos.OrderFullDTO;
 import uz.pdp.clients.dtos.PaymentCreateDTO;
 
 @FeignClient(value = "PAYMENTSERVICE", path = "/api/v1/payment")
 public interface PaymentClient {
 
     @PostMapping()
-    ResponseEntity<?> savePayment(@RequestBody PaymentCreateDTO paymentCreateDTO);
+    ResponseEntity<?> savePayment(@RequestBody OrderFullDTO orderFullDTO);
 
     @DeleteMapping("/{orderId}")
     ResponseEntity<?> rollbackPayment(@PathVariable Long orderId);

@@ -3,8 +3,11 @@ package uz.pdp.productservice.service;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import uz.pdp.clients.dtos.OrderFullDTO;
 import uz.pdp.clients.dtos.OrderItemDTO;
 import uz.pdp.clients.dtos.OrderItemFull;
+import uz.pdp.clients.dtos.PaymentCreateDTO;
+import uz.pdp.clients.payment.PaymentClient;
 import uz.pdp.productservice.dto.ProductDTO;
 import uz.pdp.productservice.entity.Category;
 import uz.pdp.productservice.entity.Product;
@@ -22,6 +25,7 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final LeftoverService leftoverService;
     private final OptimisticLockRetrier optimisticLockRetrier;
+    private final PaymentClient paymentClient;
 
 
     public Product create(ProductDTO dto) {
@@ -63,15 +67,14 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
-    public List<OrderItemFull> updateProductLeftover(List<OrderItemDTO> orderItemDTOS) {
-        return optimisticLockRetrier.retry(() ->
-                leftoverService.updateLeftover2(orderItemDTOS)
+    public void updateProductLeftover(OrderFullDTO orderFullDTO) {
+        optimisticLockRetrier.retry(() ->
+                leftoverService.updateLeftover2(orderFullDTO)
         );
     }
 
     public void rollbackProductLeftover(List<OrderItemDTO> orderItemDTOS) {
-        optimisticLockRetrier.retry(() ->
-                leftoverService.rollback2(orderItemDTOS));
+        optimisticLockRetrier.retry(() -> leftoverService.rollback2(orderItemDTOS));
     }
 
 

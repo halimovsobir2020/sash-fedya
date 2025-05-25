@@ -3,6 +3,7 @@ package uz.pdp.productservice.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import uz.pdp.clients.dtos.OrderFullDTO;
 import uz.pdp.clients.dtos.OrderItemDTO;
 import uz.pdp.clients.dtos.OrderItemFull;
 import uz.pdp.productservice.dto.ProductDTO;
@@ -22,9 +23,9 @@ public class ProductController {
     }
 
     @PostMapping("/leftover/update")
-    public ResponseEntity<List<OrderItemFull>> updateProductLeftover(@RequestBody List<OrderItemDTO> orderItemDTOS) {
-        List<OrderItemFull> orderItems = productService.updateProductLeftover(orderItemDTOS);
-        return ResponseEntity.ok(orderItems);
+    public ResponseEntity<?> updateProductLeftover(@RequestBody OrderFullDTO orderFullDTO) {
+        productService.updateProductLeftover(orderFullDTO);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/leftover/rollback")
