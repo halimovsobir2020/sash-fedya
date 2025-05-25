@@ -22,7 +22,7 @@ public class Order extends BaseEntity {
     private LocalDateTime orderDateTime;
 
     @Enumerated(EnumType.STRING)
-    private OrderStatus orderStatus = OrderStatus.PENDING;
+    private OrderStatus orderStatus = OrderStatus.CREATED;
 
     private UUID userId;
 

@@ -32,34 +32,24 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(OrderDTO orderDTO) {
-        List<OrderItemFull> orderItemFulls = checkProductAvailabilty(orderDTO);
         Order savedOrder = orderRepository.save(new Order());
-        List<OrderItem> orderItems = orderItemFulls.stream().map(orderItem -> new OrderItem(
-                savedOrder,
-                orderItem.getProductId(),
-                orderItem.getQuantity(),
-                orderItem.getPrice(),
-                orderItem.getProductName()
-        )).toList();
-        orderItemRepository.saveAll(orderItems);
-        Integer totalPrice = findOrderTotalPrice(orderItems);
-        ResponseEntity<?> paymentResponse = paymentClient.createPayment(new PaymentCreateDTO(
-                totalPrice,
-                savedOrder.getId()
-        ));
-        if (!paymentResponse.getStatusCode().is2xxSuccessful()) {
-            productClient.rollback(orderDTO.getOrderItems());
-            throw new RuntimeException("Payment failed");
-        }
-        ResponseEntity<?> responseProductOutcome = outComeClient.orderOutcome(orderDTO.getOrderItems(), savedOrder.getId());
-        if (!responseProductOutcome.getStatusCode().is2xxSuccessful()) {
-            paymentClient.rollbackPayment(savedOrder.getId());
-            productClient.rollback(orderDTO.getOrderItems());
-            throw new RuntimeException("error outcome");
-        }
-        savedOrder.setOrderStatus(OrderStatus.CREATED);
         try {
-            return orderRepository.save(savedOrder);
+            List<OrderItemFull> orderItemFulls = checkProductAvailabilty(orderDTO);
+            List<OrderItem> orderItems = orderItemFulls.stream().map(orderItem -> new OrderItem(
+                    savedOrder,
+                    orderItem.getProductId(),
+                    orderItem.getQuantity(),
+                    orderItem.getPrice(),
+                    orderItem.getProductName()
+            )).toList();
+            orderItemRepository.saveAll(orderItems);
+            Integer totalPrice = findOrderTotalPrice(orderItems);
+            paymentClient.createPayment(new PaymentCreateDTO(
+                    totalPrice,
+                    savedOrder.getId()
+            ));
+            outComeClient.orderOutcome(orderDTO.getOrderItems(), savedOrder.getId());
+            return savedOrder;
         } catch (Exception e) {
             paymentClient.rollbackPayment(savedOrder.getId());
             productClient.rollback(orderDTO.getOrderItems());

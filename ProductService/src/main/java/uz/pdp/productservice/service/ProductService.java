@@ -20,6 +20,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final LeftOverService leftOverService;
 
     //CRUD OPERATOINS>>>>>>>
     public Product create(ProductDTO dto) {
@@ -66,7 +67,7 @@ public class ProductService {
     public List<OrderItemFull> updateLeftOver(List<OrderItemFull> orderItems)  {
         for (int i = 0; i < 3; i++) {
             try {
-                return updateLeftOverStep2(orderItems);
+                return leftOverService.updateLeftOverStep2(orderItems);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } catch (ObjectOptimisticLockingFailureException e) {
@@ -77,31 +78,19 @@ public class ProductService {
         throw new RuntimeException("too many requests");
     }
 
-    @Transactional
-    public List<OrderItemFull> updateLeftOverStep2(List<OrderItemFull> orderItems) throws InterruptedException {
-        List<Long> productIds = orderItems.stream().map(OrderItemFull::getProductId).toList();
-        List<Product> products = productRepository.findAllByIdIn(productIds);
-        for (OrderItemFull orderItem : orderItems) {
-            Product product = products.stream().filter(item -> item.getId().equals(orderItem.getProductId())).findFirst().orElseThrow();
-            if (product.getLeftOver() < orderItem.getQuantity()) {
-                throw new RuntimeException("not enough product left over");
-            }
-            product.setLeftOver(product.getLeftOver() - orderItem.getQuantity());
-            orderItem.setPrice(product.getPrice());
-            orderItem.setProductName(product.getName());
-        }
-        productRepository.saveAll(products);
-        return orderItems;
-    }
-
 
     public void compensateAction(List<OrderItemDTO> orderItemDTOS) {
-        List<Long> productIds = orderItemDTOS.stream().map(OrderItemDTO::getProductId).toList();
-        List<Product> products = productRepository.findAllByIdIn(productIds);
-        for (OrderItemDTO orderItemDTO : orderItemDTOS) {
-            Product product = products.stream().filter(item -> item.getId().equals(orderItemDTO.getProductId())).findFirst().orElseThrow();
-            product.setLeftOver(product.getLeftOver() + orderItemDTO.getQuantity());
+        for (int i = 0; i < 3; i++) {
+            try {
+                leftOverService.compensateActionStep2(orderItemDTOS);
+                return;
+            } catch (ObjectOptimisticLockingFailureException e) {
+                System.out.println("catchga tushdi");
+                continue;
+            }
         }
-        productRepository.saveAll(products);
+        throw new RuntimeException("too many requests");
     }
+
+
 }
