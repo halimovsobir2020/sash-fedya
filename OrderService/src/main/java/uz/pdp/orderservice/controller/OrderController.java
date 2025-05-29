@@ -10,7 +10,7 @@ import uz.pdp.orderservice.entity.Order;
 import uz.pdp.orderservice.service.OrderService;
 
 @RestController
-@RequestMapping("/api/v1/order")
+@RequestMapping("/api/order")
 @RequiredArgsConstructor
 public class OrderController {
 

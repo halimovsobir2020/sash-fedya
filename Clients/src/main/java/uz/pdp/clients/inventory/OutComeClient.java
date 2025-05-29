@@ -5,15 +5,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import uz.pdp.clients.dtos.OrderItemDTO;
+import uz.pdp.clients.dtos.OrderFullDTO;
 
-import java.util.List;
-
-@FeignClient(value = "INVENTORYSERVICE",path = "/api/v1/inventory")
+@FeignClient(value = "INVENTORYSERVICE",path = "/api/inventory")
 public interface OutComeClient {
 
-    @PostMapping("/outcome/{orderId}")
-    ResponseEntity<?> orderOutcome(@RequestBody List<OrderItemDTO> orderItems, @PathVariable("orderId") Long orderId);
+    @PostMapping("/outcome")
+    ResponseEntity<?> orderOutcome(@RequestBody OrderFullDTO orderFullDTO);
 
     @PostMapping("/rollback/{orderId}")
     ResponseEntity<?> rollback(@PathVariable("orderId") Long orderId);

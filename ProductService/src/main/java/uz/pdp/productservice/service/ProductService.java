@@ -1,15 +1,20 @@
 package uz.pdp.productservice.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import uz.pdp.clients.dtos.OrderItemDTO;
-import uz.pdp.clients.dtos.OrderItemFull;
+import uz.pdp.clients.dtos.OrderFullDTO;
+import uz.pdp.clients.dtos.OutboxStatus;
+import uz.pdp.clients.kafkaconfig.KafkaTopics;
 import uz.pdp.productservice.dto.ProductDTO;
 import uz.pdp.productservice.entity.Category;
+import uz.pdp.productservice.kafkaconfig.outbox.Outbox;
 import uz.pdp.productservice.entity.Product;
 import uz.pdp.productservice.repo.CategoryRepository;
+import uz.pdp.productservice.kafkaconfig.outbox.OutboxRepository;
 import uz.pdp.productservice.repo.ProductRepository;
 
 import java.util.List;
@@ -21,6 +26,9 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final LeftOverService leftOverService;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
 
     //CRUD OPERATOINS>>>>>>>
     public Product create(ProductDTO dto) {
@@ -64,33 +72,30 @@ public class ProductService {
     //CRUD OPERATOINS>>>>>>>
 
 
-    public List<OrderItemFull> updateLeftOver(List<OrderItemFull> orderItems)  {
-        for (int i = 0; i < 3; i++) {
-            try {
-                return leftOverService.updateLeftOverStep2(orderItems);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (ObjectOptimisticLockingFailureException e) {
-                System.out.println("catchga tushdi");
-                continue;
-            }
+    @SneakyThrows
+    public void updateLeftOver(OrderFullDTO orderFullDTO) {
+        try {
+            leftOverService.updateLeftOverStep2(orderFullDTO);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            updateLeftOver(orderFullDTO);
+        } catch (Exception e) {
+            outboxRepository.save(
+                    Outbox.builder()
+                            .topic(KafkaTopics.ORDER_ROLLBACK)
+                            .status(OutboxStatus.PENDING)
+                            .payload(orderFullDTO.getOrderId().toString())
+                            .aggregateId(orderFullDTO.getOrderId())
+                            .aggregateType("Long")
+                            .build()
+            );
         }
-        throw new RuntimeException("too many requests");
     }
 
-
-    public void compensateAction(List<OrderItemDTO> orderItemDTOS) {
-        for (int i = 0; i < 3; i++) {
-            try {
-                leftOverService.compensateActionStep2(orderItemDTOS);
-                return;
-            } catch (ObjectOptimisticLockingFailureException e) {
-                System.out.println("catchga tushdi");
-                continue;
-            }
+    public void rollback(OrderFullDTO orderFullDTO) {
+        try {
+            leftOverService.compensateActionStep2(orderFullDTO);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            rollback(orderFullDTO);
         }
-        throw new RuntimeException("too many requests");
     }
-
-
 }

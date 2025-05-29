@@ -21,6 +21,9 @@ public class OrderItem extends BaseEntity {
     private Integer price;
     private String productName;
 
-
-
+    public OrderItem(Order order, Long productId, Integer quantity) {
+        this.order = order;
+        this.productId = productId;
+        this.quantity = quantity;
+    }
 }
