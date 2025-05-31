@@ -1,30 +1,36 @@
 package uz.pdp.productservice.service;
 
-import jakarta.persistence.OptimisticLockException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import uz.pdp.clients.dtos.OrderItemDTO;
-import uz.pdp.clients.dtos.ProductInfoDTO;
+import uz.pdp.clients.dtos.OrderFullDTO;
+import uz.pdp.clients.dtos.OutboxStatus;
+import uz.pdp.clients.kafkaconfig.KafkaTopics;
 import uz.pdp.productservice.dto.ProductDTO;
 import uz.pdp.productservice.entity.Category;
+import uz.pdp.productservice.kafkaconfig.outbox.Outbox;
 import uz.pdp.productservice.entity.Product;
 import uz.pdp.productservice.repo.CategoryRepository;
+import uz.pdp.productservice.kafkaconfig.outbox.OutboxRepository;
 import uz.pdp.productservice.repo.ProductRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final LeftOverService leftOverService;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
 
-    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository) {
-        this.productRepository = productRepository;
-        this.categoryRepository = categoryRepository;
-    }
-
+    //CRUD OPERATOINS>>>>>>>
     public Product create(ProductDTO dto) {
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -63,42 +69,33 @@ public class ProductService {
     public void delete(Long id) {
         productRepository.deleteById(id);
     }
+    //CRUD OPERATOINS>>>>>>>
 
-    @Transactional
-    public List<ProductInfoDTO> updateLeftOver(List<OrderItemDTO> orderItems) throws Exception {
-        List<Product> products = new ArrayList<>();
-        for (OrderItemDTO orderItem : orderItems) {
-            Product product = changeLeftOverOfProduct(orderItem);
-            products.add(product);
-        }
-        return products.stream().map(item->new ProductInfoDTO(
-                item.getId(),
-                item.getName(),
-                item.getPrice()
-        )).toList();
-    }
 
-    private Product changeLeftOverOfProduct(OrderItemDTO orderItem) throws Exception {
-        Product product = productRepository.findById(orderItem.getProductId()).orElseThrow();
-        if(product.getLeftOver() < orderItem.getQuantity() ) {
-            throw new Exception("not enough product left over");
-        }
-        product.setLeftOver(product.getLeftOver() - orderItem.getQuantity());
+    @SneakyThrows
+    public void updateLeftOver(OrderFullDTO orderFullDTO) {
         try {
-            productRepository.save(product);
-        } catch (OptimisticLockException e) {
-            changeLeftOverOfProduct(orderItem);
+            leftOverService.updateLeftOverStep2(orderFullDTO);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            updateLeftOver(orderFullDTO);
+        } catch (Exception e) {
+            outboxRepository.save(
+                    Outbox.builder()
+                            .topic(KafkaTopics.ORDER_ROLLBACK)
+                            .status(OutboxStatus.PENDING)
+                            .payload(orderFullDTO.getOrderId().toString())
+                            .aggregateId(orderFullDTO.getOrderId())
+                            .aggregateType("Long")
+                            .build()
+            );
         }
-        return product;
     }
 
-    public void compensateAction(List<OrderItemDTO> orderItemDTOS) {
-        List<Long> productIds = orderItemDTOS.stream().map(item -> item.getProductId()).toList();
-        List<Product> products = productRepository.findAllByIdIn(productIds);
-        for (OrderItemDTO orderItemDTO : orderItemDTOS) {
-            Product product = products.stream().filter(item -> item.getId().equals(orderItemDTO.getProductId())).findFirst().orElseThrow();
-            product.setLeftOver(product.getLeftOver() + orderItemDTO.getQuantity());
+    public void rollback(OrderFullDTO orderFullDTO) {
+        try {
+            leftOverService.compensateActionStep2(orderFullDTO);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            rollback(orderFullDTO);
         }
-        productRepository.saveAll(products);
     }
 }

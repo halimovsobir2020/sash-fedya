@@ -1,9 +1,6 @@
 package uz.pdp.orderservice.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,7 +25,5 @@ public class Order extends BaseEntity {
     private OrderStatus orderStatus = OrderStatus.PENDING;
 
     private UUID userId;
-
-
 
 }

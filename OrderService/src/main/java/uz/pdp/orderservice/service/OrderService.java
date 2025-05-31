@@ -1,89 +1,68 @@
 package uz.pdp.orderservice.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import lombok.SneakyThrows;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
-import uz.pdp.clients.dtos.PaymentCreateDTO;
-import uz.pdp.clients.dtos.ProductInfoDTO;
-import uz.pdp.clients.inventory.OutComeClient;
-import uz.pdp.clients.payment.PaymentClient;
-import uz.pdp.clients.product.ProductClient;
-import uz.pdp.clients.product.RollBackProductLeftOverClient;
+import uz.pdp.clients.dtos.OrderFullDTO;
+import uz.pdp.clients.dtos.OrderItemFull;
+import uz.pdp.clients.dtos.OutboxStatus;
 import uz.pdp.orderservice.dto.OrderDTO;
 import uz.pdp.orderservice.entity.Order;
 import uz.pdp.orderservice.entity.OrderItem;
+import uz.pdp.orderservice.kafkaconfig.outbox.Outbox;
 import uz.pdp.orderservice.entity.enums.OrderStatus;
 import uz.pdp.orderservice.repo.OrderItemRepository;
 import uz.pdp.orderservice.repo.OrderRepository;
+import uz.pdp.orderservice.kafkaconfig.outbox.OutboxRepository;
 
 import java.util.List;
 
+import static uz.pdp.clients.kafkaconfig.KafkaTopics.PRODUCT_LEFTOVER_CHANGE;
+
+@ComponentScan(basePackages = {"uz.pdp.orderservice", "uz.pdp.clients"})
 @Service
 @RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final ProductClient productClient;
     private final OrderItemRepository orderItemRepository;
-    private final PaymentClient paymentClient;
-    private final RollBackProductLeftOverClient rollBackProductLeftOverClient;
-    private final OutComeClient outComeClient;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
 
+    @SneakyThrows
     @Transactional
     public Order createOrder(OrderDTO orderDTO) {
-        List<ProductInfoDTO> productInfoDTOS = checkProductAvailabilty(orderDTO);
         Order savedOrder = orderRepository.save(new Order());
-        List<OrderItem> orderItems = orderDTO.getOrderItems().stream().map(orderItem -> new OrderItem(
-                savedOrder,
-                orderItem.getProductId(),
-                orderItem.getQuantity(),
-                findProductPrice(productInfoDTOS, orderItem.getProductId()),
-                findProductName(productInfoDTOS, orderItem.getProductId())
-        )).toList();
+        List<OrderItem> orderItems = orderDTO.getOrderItems()
+                .stream()
+                .map(orderItemDTO -> new OrderItem(
+                        savedOrder,
+                        orderItemDTO.getProductId(),
+                        orderItemDTO.getQuantity()
+                )).toList();
         orderItemRepository.saveAll(orderItems);
-        Integer totalPrice = findOrderTotalPrice(orderItems);
-        ResponseEntity<?> paymentResponse = paymentClient.createPayment(new PaymentCreateDTO(
-                totalPrice,
-                savedOrder.getId()
-        ));
-        if(!paymentResponse.getStatusCode().is2xxSuccessful()){
-            rollBackProductLeftOverClient.rollback(orderDTO.getOrderItems());
-            throw new RuntimeException("Payment failed");
-        }
-        ResponseEntity<?> responseProductOutcome = outComeClient.orderOutcome(orderDTO.getOrderItems(), savedOrder.getId());
-        if(!responseProductOutcome.getStatusCode().is2xxSuccessful()){
-            rollBackProductLeftOverClient.rollback(orderDTO.getOrderItems());
-            throw new RuntimeException("error outcome");
-        }
-        savedOrder.setOrderStatus(OrderStatus.CREATED);
-        return orderRepository.save(savedOrder);
+
+        List<OrderItemFull> orderItemFullList = orderDTO.getOrderItems().stream().map(orderItemDTO -> new OrderItemFull(orderItemDTO.getProductId(), orderItemDTO.getQuantity())).toList();
+        OrderFullDTO orderFullDTO = new OrderFullDTO(orderItemFullList, savedOrder.getId());
+
+        outboxRepository.save(Outbox.builder()
+                .topic(PRODUCT_LEFTOVER_CHANGE)
+                .status(OutboxStatus.PENDING)
+                .aggregateId(savedOrder.getId())
+                .aggregateType("OrderFullDTO")
+                .payload(objectMapper.writeValueAsString(orderFullDTO))
+                .build());
+        return savedOrder;
     }
 
-    private Integer findOrderTotalPrice(List<OrderItem> orderItems) {
-        return orderItems.stream().mapToInt(orderItem -> orderItem.getPrice()*orderItem.getQuantity()).sum();
+    public void rollback(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+        order.setOrderStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
     }
 
-    @SuppressWarnings("unchecked")
-    private List<ProductInfoDTO> checkProductAvailabilty(OrderDTO orderDTO) {
-        ResponseEntity<?> responseLeftOver = productClient.updateProductLeftOver(orderDTO.getOrderItems());
-        if (!responseLeftOver.getStatusCode().is2xxSuccessful()) {
-            throw new RuntimeException("not enough products");
-        }
-        return (List<ProductInfoDTO>) responseLeftOver.getBody();
-    }
-
-    private Integer findProductPrice(List<ProductInfoDTO> productInfoDTOS, Long productId) {
-        ProductInfoDTO productInfoDTO = productInfoDTOS.stream()
-                .filter(item -> item.getId().equals(productId))
-                .findFirst().orElseThrow();
-        return productInfoDTO.getPrice();
-    }
-
-    private String findProductName(List<ProductInfoDTO> productInfoDTOS, Long productId) {
-        ProductInfoDTO productInfoDTO = productInfoDTOS.stream()
-                .filter(item -> item.getId().equals(productId))
-                .findFirst().orElseThrow();
-        return productInfoDTO.getName();
-    }
 }
+

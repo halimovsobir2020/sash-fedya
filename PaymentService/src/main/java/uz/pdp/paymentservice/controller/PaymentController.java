@@ -4,24 +4,22 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import uz.pdp.clients.dtos.OrderFullDTO;
 import uz.pdp.clients.dtos.PaymentCreateDTO;
 import uz.pdp.paymentservice.entity.Payment;
 import uz.pdp.paymentservice.service.PaymentService;
 
 @RestController
-@RequestMapping("/api/v1/payment")
+@RequestMapping("/api/payment")
 @RequiredArgsConstructor
 public class PaymentController {
 
     private final PaymentService paymentService;
 
     @PostMapping
-    public ResponseEntity<?> createPayment(@RequestBody PaymentCreateDTO paymentCreateDTO) {
-        Payment payment = paymentService.create(paymentCreateDTO);
+    public ResponseEntity<?> createPayment(@RequestBody OrderFullDTO orderFullDTO) {
+        Payment payment = paymentService.create(orderFullDTO);
         return new ResponseEntity<>(payment, HttpStatus.CREATED);
     }
 
