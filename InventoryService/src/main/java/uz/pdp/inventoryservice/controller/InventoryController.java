@@ -1,13 +1,10 @@
 package uz.pdp.inventoryservice.controller;
 
-import uz.pdp.clients.dtos.OrderFullDTO;
-import uz.pdp.clients.dtos.OrderItemDTO;
-import uz.pdp.inventoryservice.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import uz.pdp.clients.dtos.OrderFullDTO;
+import uz.pdp.inventoryservice.service.InventoryService;
 
 @RestController
 @RequestMapping("api/inventory")
