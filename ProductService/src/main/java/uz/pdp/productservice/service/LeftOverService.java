@@ -9,9 +9,8 @@ import uz.pdp.clients.dtos.OrderFullDTO;
 import uz.pdp.clients.dtos.OrderItemFull;
 import uz.pdp.clients.dtos.OutboxStatus;
 import uz.pdp.clients.kafkaconfig.KafkaTopics;
-import uz.pdp.clients.payment.PaymentClient;
-import uz.pdp.productservice.kafkaconfig.outbox.Outbox;
 import uz.pdp.productservice.entity.Product;
+import uz.pdp.productservice.kafkaconfig.outbox.Outbox;
 import uz.pdp.productservice.kafkaconfig.outbox.OutboxRepository;
 import uz.pdp.productservice.repo.ProductRepository;
 
@@ -21,7 +20,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LeftOverService {
     private final ProductRepository productRepository;
-    private final PaymentClient paymentClient;
     private final OutboxRepository outboxRepository;
     private final ObjectMapper objectMapper;
 

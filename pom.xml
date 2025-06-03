@@ -35,6 +35,7 @@
         <module>PaymentService</module>
         <module>ProductService</module>
         <module>InventoryService</module>
+        <module>Gateway</module>
     </modules>
 
     <properties>

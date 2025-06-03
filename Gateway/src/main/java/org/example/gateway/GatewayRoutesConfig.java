@@ -1,4 +1,4 @@
-package uz.pdp.gateway;
+package org.example.gateway;
 
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
@@ -24,8 +24,9 @@ public class GatewayRoutesConfig {
                         .uri("lb://INVENTORYSERVICE"))
 
                 .route("payment-service", r -> r.path("/api/payment/**")
-                        .filters(f -> f.rewritePath("/api/payment/(?<segment>.*)", "/${segment}"))
+                        .filters(f -> f.rewritePath("/api/payment(?<segment>/.*)?", "/${segment}"))
                         .uri("lb://PAYMENTSERVICE"))
                 .build();
     }
+
 }
